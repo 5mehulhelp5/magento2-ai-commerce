@@ -6,6 +6,7 @@ namespace Selectika\AiCommerce\Console;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
 use Magento\Store\Model\StoreManagerInterface;
+use Psr\Log\LoggerInterface;
 use Selectika\AiCommerce\Model\ExportCatalogFactory;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,7 +16,7 @@ use Throwable;
 
 class ExportCommand extends Command
 {
-    public function __construct(private ExportCatalogFactory $exporterFactory, private StoreManagerInterface $stores, private State $state)
+    public function __construct(private ExportCatalogFactory $exporterFactory, private StoreManagerInterface $stores, private State $state, private ?LoggerInterface $logger = null)
     {
         parent::__construct();
     }
@@ -43,7 +44,18 @@ class ExportCommand extends Command
             $output->writeln(sprintf('Published snapshot %s: %d rows in %d pages.', $manifest['snapshot_id'], $manifest['total_rows'], count($manifest['pages'])));
             return 0;
         } catch (Throwable $error) {
-            $output->writeln('<error>Catalog export failed. Check Magento logs and configuration. The prior snapshot was retained.</error>');
+            // Exception messages/traces can contain merchant values or credentials.
+            $diagnostic = [
+                'error_type' => get_debug_type($error),
+                'error_file' => basename($error->getFile()),
+                'error_line' => $error->getLine(),
+            ];
+            // Older compiled DI metadata may omit the new logger until setup recompiles it.
+            $this->logger?->error('Selectika catalog export failed; prior snapshot retained.', $diagnostic);
+            $output->writeln(sprintf(
+                '<error>Catalog export failed (%s at %s:%d). Check Magento logs and configuration. The prior snapshot was retained.</error>',
+                $diagnostic['error_type'], $diagnostic['error_file'], $diagnostic['error_line']
+            ));
             return 1;
         }
     }

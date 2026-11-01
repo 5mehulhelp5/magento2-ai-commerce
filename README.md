@@ -1,6 +1,6 @@
 # Selectika AI Commerce for Magento
 
-Composer module `selectika/module-ai-commerce`, Magento module `Selectika_AiCommerce`, version 0.1.2.
+Composer module `selectika/module-ai-commerce`, Magento module `Selectika_AiCommerce`, version 0.1.3.
 The module supplies a protected catalog snapshot and the existing Selectika storefront loader,
 with an optional native commerce event bridge. All features are disabled on installation.
 Account linking is manual in this version. This source package is not a Marketplace listing.
@@ -44,8 +44,8 @@ For local development, copy this module inside the Magento project at
 `packages/selectika/module-ai-commerce` and use a path repository:
 
 ```sh
-composer config repositories.selectika-ai-commerce '{"type":"path","url":"packages/selectika/module-ai-commerce","options":{"versions":{"selectika/module-ai-commerce":"0.1.2"},"symlink":false}}'
-composer require selectika/module-ai-commerce:0.1.2
+composer config repositories.selectika-ai-commerce '{"type":"path","url":"packages/selectika/module-ai-commerce","options":{"versions":{"selectika/module-ai-commerce":"0.1.3"},"symlink":false}}'
+composer require selectika/module-ai-commerce:0.1.3
 ```
 
 Then run the same module-enable, setup, compilation and cache commands above. This version
@@ -212,6 +212,13 @@ Magento cron publishes a snapshot hourly at minute 17. Build the first snapshot 
 ```sh
 bin/magento selectika:catalog:export --store=default
 ```
+
+Optional EAV attributes such as `size` and `material` may be absent in a clean
+Magento installation. Their labels remain empty (size uses the existing `One size`
+fallback); text attributes keep their raw values and select/multiselect attributes
+use their store-scoped option labels. Other export failures still abort publication
+and retain the previous snapshot. The CLI and Magento log report the exception type
+and source filename/line without exception messages, traces, or merchant payloads.
 
 The protected GET endpoint is:
 

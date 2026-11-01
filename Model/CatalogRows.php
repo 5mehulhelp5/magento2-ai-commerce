@@ -129,9 +129,17 @@ class CatalogRows
 
     private function attributeLabel(Product $product, string $code): string
     {
-        $value = $product->getAttributeText($code);
-        if ($value === false || $value === null || $value === '') {
-            $value = $product->getData($code);
+        $attribute = $product->getResource()->getAttribute($code);
+        if (!$attribute) {
+            // Optional fields such as size/material are not installed in every store.
+            return '';
+        }
+        $value = $product->getData($code);
+        if ($value !== null && $value !== '' && $attribute->usesSource()) {
+            $label = $attribute->getSource()->getOptionText($value);
+            if ($label !== false && $label !== null && $label !== '') {
+                $value = $label;
+            }
         }
         return is_array($value) ? implode(', ', $value) : (is_scalar($value) ? (string) $value : '');
     }
