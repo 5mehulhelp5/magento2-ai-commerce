@@ -220,6 +220,14 @@ use their store-scoped option labels. Other export failures still abort publicat
 and retain the previous snapshot. The CLI and Magento log report the exception type
 and source filename/line without exception messages, traces, or merchant payloads.
 
+The cron job and the CLI start in Magento's `crontab` area. The exporter switches to the
+`frontend` area before it emulates the store view, because under `crontab` Magento keys the
+storefront theme as `crontab/<theme>`, which is not a registered component, and the emulated
+translation lookup fails with `Required parameter 'theme_dir' was not passed`. The area of the
+caller is restored afterwards, so no setting is required. After upgrading from an earlier version,
+run `setup:upgrade` and `setup:di:compile` as for any module change: the exporter has a new
+constructor dependency (`Magento\Framework\App\State`).
+
 The protected GET endpoint is:
 
 ```text
