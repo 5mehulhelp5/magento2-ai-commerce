@@ -169,6 +169,15 @@ define([], function () {
       }
       // Install a consent-aware command queue before either existing runtime can initialize it.
       ensureTrack();
+      // The configured retailer can differ from the storefront domain (including our demo host).
+      // Keep loader-managed placements and analytics fallback available for existing installations.
+      win.__SelectikaCommerceHost = {
+        schemaVersion: 1,
+        platform: 'magento',
+        retailerName: config.retailerName,
+        manualPlacement: false,
+        analyticsManaged: false,
+      };
       if (config.trackingEnabled && config.publisherId) {
         tracker('init', config.publisherId);
         tracker('param', 'src', 'magento_module');

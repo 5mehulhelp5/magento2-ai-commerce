@@ -1,6 +1,6 @@
 # Selectika AI Commerce for Magento
 
-Composer module `selectika/module-ai-commerce`, Magento module `Selectika_AiCommerce`, version 0.1.1.
+Composer module `selectika/module-ai-commerce`, Magento module `Selectika_AiCommerce`, version 0.1.2.
 The module supplies a protected catalog snapshot and the existing Selectika storefront loader,
 with an optional native commerce event bridge. All features are disabled on installation.
 Account linking is manual in this version. This source package is not a Marketplace listing.
@@ -44,8 +44,8 @@ For local development, copy this module inside the Magento project at
 `packages/selectika/module-ai-commerce` and use a path repository:
 
 ```sh
-composer config repositories.selectika-ai-commerce '{"type":"path","url":"packages/selectika/module-ai-commerce","options":{"versions":{"selectika/module-ai-commerce":"0.1.1"},"symlink":false}}'
-composer require selectika/module-ai-commerce:0.1.1
+composer config repositories.selectika-ai-commerce '{"type":"path","url":"packages/selectika/module-ai-commerce","options":{"versions":{"selectika/module-ai-commerce":"0.1.2"},"symlink":false}}'
+composer require selectika/module-ai-commerce:0.1.2
 ```
 
 Then run the same module-enable, setup, compilation and cache commands above. This version
@@ -325,9 +325,13 @@ categories, images, price and stock counts in a separate pilot before changing a
 ## Storefront, consent and native events
 
 The Luma/Blank RequireJS adapter reuses `https://scripts.selectika.com/selectika-wc.js` and the
-existing pixel. Retailer/domain/language resolution, widgets and placements remain configured in
-Selectika's current script settings. Register the store host there; the Magento retailer field
-does not override loader host resolution. Set the retailer selector
+existing pixel. Version 0.1.2 identifies the configured retailer to the loader using the versioned
+`window.__SelectikaCommerceHost` contract before loading either script, after consent. The updated
+loader uses this identity even when the storefront has a different domain or an external referrer;
+an explicit `?retailer=` preview override still takes precedence. Deploy the matching Selectika
+loader before enabling this release. Language, widgets and placements remain configured in
+Selectika's current script settings. The host contract keeps automatic placement and configured
+analytics fallback enabled, including when native tracking is disabled. Set the retailer selector
 `script.selectors.productIdInput` to `#selectika-product-sku` for this parent-SKU catalog.
 `#selectika-selected-variant-id` and `#selectika-selected-variant-sku` expose the selected child;
 `selectika:product-context` carries `{parentSku, variant}`. Unknown selections clear the child.
