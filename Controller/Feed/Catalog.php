@@ -30,7 +30,8 @@ class Catalog implements HttpGetActionInterface
     {
         $response = $this->json->create();
         $response->setHeader('Cache-Control', 'private, no-store, max-age=0', true)
-            ->setHeader('X-Content-Type-Options', 'nosniff', true);
+            ->setHeader('X-Content-Type-Options', 'nosniff', true)
+            ->setHeader('Referrer-Policy', 'no-referrer', true);
         try {
             $storeCode = (string) $this->request->getParam('store', '');
             if ($storeCode === '' || $storeCode === 'admin') {
@@ -38,8 +39,11 @@ class Catalog implements HttpGetActionInterface
             }
             $store = $this->stores->getStore($storeCode);
             $storeId = (int) $store->getId();
+            $header = (string) $this->request->getHeader('Authorization');
+            $queryToken = $this->request->getQuery('token');
+            $queryToken = is_string($queryToken) ? $queryToken : null;
             if (!$this->config->enabled('catalog/enabled', $storeId) || !$store->isActive()
-                || !$this->authorization->accepts((string) $this->request->getHeader('Authorization'), $this->config->token($storeId), $this->request->isSecure())) {
+                || !$this->authorization->accepts($header, $this->config->token($storeId), $this->request->isSecure(), $queryToken)) {
                 return $response->setHttpResponseCode(401)->setData(['error' => 'unauthorized']);
             }
             $pageValue = (string) $this->request->getParam('page', '1');
@@ -57,11 +61,16 @@ class Catalog implements HttpGetActionInterface
                 if (parse_url($base, PHP_URL_SCHEME) !== 'https') {
                     return $response->setHttpResponseCode(503)->setData(['error' => 'secure_store_url_required']);
                 }
-                $next = rtrim($base, '/') . '/selectika/feed/catalog?' . http_build_query([
+                $params = [
                     'store' => $store->getCode(),
                     'snapshot' => $manifest['snapshot_id'],
                     'page' => $page + 1,
-                ], '', '&', PHP_QUERY_RFC3986);
+                ];
+                // Header-less clients must be able to follow `next`; header clients never see the token.
+                if ($this->authorization->usesQueryToken($header, $queryToken)) {
+                    $params['token'] = $queryToken;
+                }
+                $next = rtrim($base, '/') . '/selectika/feed/catalog?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
             }
             return $response->setData([
                 'results' => $data['results'],

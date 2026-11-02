@@ -235,6 +235,13 @@ https://shop.example.com/selectika/feed/catalog/store/default/
 Authorization: Bearer <read-only-feed-token>
 ```
 
+Clients that cannot set headers may instead send the same token as `?token=<read-only-feed-token>`.
+The query token is used only when the request has no `Authorization: Bearer` header (a wrong Bearer header
+is never retried from the query), is validated and compared exactly like the header token, and is repeated
+in the returned `next` URLs so such a client can page. Prefer the header: query strings are written to
+web-server, CDN and proxy access logs and to browser history, so treat any URL that carried the token as
+secret and rotate the token if one leaks. Responses send `Referrer-Policy: no-referrer`.
+
 HTTPS is mandatory, including correct trusted-proxy HTTPS configuration in Magento. A missing,
 wrong or insecure credential returns 401; missing, stale or corrupt snapshots return 503, never a
 successful empty feed. Successful responses contain `results`, `next`, `snapshot_id`,
